@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-green
+  namespace: blue-green-demo
+  labels:
+    app: myapp
+    version: green
+spec:
+  replicas: 3  # Running 3 instances for high availability
+  selector:
+    matchLabels:
+      app: myapp
+      version: green  # Labels used to identify blue pods
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: green
+    spec:
+      containers:
+      - name: myapp
+        image: nginx:1.21.0  # Using nginx for our example
+        ports:
+        - containerPort: 80
+        resources:
+          requests:  # Resource requests ensure pods get enough resources
+            memory: "64Mi"
+            cpu: "100m"
+          limits:  # Resource limits prevent pods from consuming too much
+            memory: "128Mi"
+            cpu: "200m"
+        readinessProbe:  # Ensures traffic only routes to ready pods
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:  # Restarts pods if they become unhealthy
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        env:
+        - name: DEPLOYMENT_VERSION
+          value: "green"
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: green-html

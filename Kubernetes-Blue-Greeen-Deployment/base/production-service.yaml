@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-production
+  namespace: blue-green-demo
+  labels:
+    app: myapp
+    role: production
+spec:
+  selector:
+    app: myapp
+    # The active version (blue/green) will be patched here
+  ports:
+  - port: 80          # Service port
+    targetPort: 80    # Container port
+    nodePort: 31080   # Node port (must be in range 30000–32767)
+  type: NodePort

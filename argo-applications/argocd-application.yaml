@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blue-green-demo
+  namespace: argocd
+spec:
+  project: blue-green-demo  # References the Project we created
+  source:
+    repoURL: https://github.com/abhilashmalik/argocd-bluegreen-dep.git  # Your Git repo
+    targetRevision: HEAD  # Which revision to use (HEAD = latest)
+    path: blue-green-demo/overlays/blue-active  # Initially pointing to blue
+  destination:
+    server: https://kubernetes.default.svc  # Deploy to the same cluster
+    namespace: blue-green-demo  # Deploy to our namespace
+  syncPolicy:
+    automated:
+      prune: true  # Remove resources that are no longer in Git
+      selfHeal: true  # Fix drift between Git and cluster
+    syncOptions:
+    - CreateNamespace=true  # Create the namespace if it doesn't exist

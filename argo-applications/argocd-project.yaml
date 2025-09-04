@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: blue-green-demo
+  namespace: argocd
+spec:
+  description: Blue-Green Deployment Demo Project
+  sourceRepos:
+  - '*'  # Allows any repository
+  destinations:
+  - namespace: blue-green-demo
+    server: https://kubernetes.default.svc  # The Kubernetes cluster Argo CD is running in
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

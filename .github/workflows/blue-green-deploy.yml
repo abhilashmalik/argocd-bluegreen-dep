@@ -1,0 +1,49 @@
+name: Blue-Green Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test-green:
+    runs-on: ubuntu-latest
+    env:
+      NAMESPACE: blue-green-demo
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Test green environment
+        run: |
+          echo "🌐 Testing green service..."
+          GREEN_IP=$(kubectl get svc app-green -n $NAMESPACE -o jsonpath='{.spec.clusterIP}')
+          RESPONSE=$(curl -s http://$GREEN_IP)
+
+          echo "Response from green env:"
+          echo "$RESPONSE"
+
+          echo "$RESPONSE" | grep "GREEN ENVIRONMENT"
+          echo "$RESPONSE" | grep "Version 2.0"
+
+  promote-to-production:
+    runs-on: ubuntu-latest
+    needs: test-green   # equivalent of dependencies
+    steps:
+      - name: Checkout repo with push permissions
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # 🔑 authentication
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "CI Bot"
+          git config --global user.email "ci-bot@example.com"
+
+      - name: Promote green to production
+        run: |
+          echo "🚀 Promoting green to production via GitOps..."
+          sed -i 's/version: blue/version: green/' blue-green-demo/base/production-service.yaml
+          git add blue-green-demo/base/production-service.yaml
+          git commit -m "Promote green environment to production" || echo "No changes to commit"
+          git push origin main
+
